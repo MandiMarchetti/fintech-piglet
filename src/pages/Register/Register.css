@@ -1,0 +1,163 @@
+/* Container Principal - Centraliza e controla o overflow */
+.register-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    
+    height: 100vh;
+    overflow: hidden; 
+    
+    /* Posição relativa para o botão de voltar absoluto */
+    position: relative; 
+    
+    padding: 0 20px; 
+    
+    width: 100%;
+    background-color: #f0f2f5;
+    box-sizing: border-box;
+}
+
+/* Estilo para o Botão de Voltar (opcional, mas bom para a Etapa 2) */
+.back-button {
+    position: absolute;
+    top: 30px; 
+    left: 40px; 
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    z-index: 10;
+    color: #333;
+    transition: color 0.2s;
+}
+
+.back-button svg {
+    display: block; 
+    width: 28px;
+    height: 28px;
+}
+
+.back-button:hover {
+    color: #FF594E;
+}
+
+
+/* Card Principal */
+.register-card {
+    background: white;
+    padding: 30px 40px; 
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    max-width: 400px; 
+    box-sizing: border-box;
+    max-height: unset; 
+    overflow-y: hidden;
+}
+
+/* Cabeçalho (Logo e Título) */
+.register-header {
+    text-align: center;
+    margin-bottom: 15px; 
+}
+
+/* Estilo para a Imagem do Logo */
+.piglet-logo-img {
+    width: 120px; 
+    height: auto;
+    margin-bottom: -10px; 
+}
+
+.register-title {
+    font-size: 25px; 
+    color: #333;
+    font-weight: bold;
+    font-family: 'Krona One', sans-serif;
+}
+
+/* Formulário e Inputs */
+.register-form {
+    display: flex;
+    flex-direction: column;
+}
+
+.register-label {
+    font-size: 14px;
+    color: #555;
+    margin-bottom: 5px;
+}
+
+.register-input {
+    width: 100%;
+    padding: 12px; 
+    margin-bottom: 15px; 
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    font-size: 16px;
+    box-sizing: border-box;
+}
+
+.register-input:focus {
+    border-color: #FF594E;
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(255, 89, 78, 0.2);
+}
+
+/* Botão Principal */
+.register-button {
+    width: 100%;
+    padding: 14px; 
+    background-color: #FF594E;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 18px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.register-button:hover {
+    background-color: #e04a40;
+}
+
+/* Footer (Links) */
+.register-footer-text {
+    text-align: center;
+    margin-top: 15px; 
+    font-size: 14px;
+    color: #555;
+}
+
+.register-link {
+    color: #FF594E;
+    font-weight: bold;
+    cursor: pointer;
+    margin-left: 5px;
+}
+
+.register-link:hover {
+    text-decoration: underline;
+}
+
+
+/* Ajuste de Responsividade (Para Mobile) */
+@media (max-width: 600px) {
+    .register-container {
+        padding: 0 20px; 
+    }
+    
+    .register-card {
+        width: 100%;
+        max-width: none;
+        min-height: auto; 
+        border-radius: 0;
+        box-shadow: none;
+        padding: 20px 20px;
+    }
+    
+    /* Ajuste do botão de voltar em mobile */
+    .back-button {
+        top: 20px; 
+        left: 20px; 
+    }
+}
