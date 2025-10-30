@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     ChevronDown,
     BarChart2,
@@ -13,23 +13,20 @@ import {
 } from 'lucide-react';
 import './IncomeComponents.css';
 
-// --- DADOS MOCADOS ---
-const mockSummaryData = [
-    { category: 'Salário', percentage: 25, total: 15000 },
-    { category: 'Investimento', percentage: 25, total: 15000 },
-    { category: 'Retornos', percentage: 25, total: 15000 },
-    { category: 'Outros', percentage: 25, total: 15000 },
+// jsPDF + autotable
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
+
+// --- DADOS INICIAIS ---
+const initialIncomes = [
+    { id: 1, value: 3000.00, isExpense: false, date: '2025/10/25', category: 'Salário', description: 'Pagamento mensal (Outubro)' },
+    { id: 2, value: 500.50, isExpense: false, date: '2025/10/20', category: 'Investimento', description: 'Dividendos de Ações' },
+    { id: 3, value: 150.00, isExpense: false, date: '2025/10/15', category: 'Outros', description: 'Venda de item usado' },
+    { id: 4, value: 1000.00, isExpense: false, date: '2025/10/05', category: 'Retornos', description: 'Reembolso de despesa' },
+    { id: 5, value: 4500.00, isExpense: false, date: '2025/09/25', category: 'Salário', description: 'Pagamento mensal (Setembro)' },
 ];
 
-const mockRecentIncomes = [
-    { id: 1, value: 3000.00, isExpense: false, date: '25/10/2025', category: 'Salário', description: 'Pagamento mensal (Outubro)' },
-    { id: 2, value: 500.50, isExpense: false, date: '20/10/2025', category: 'Investimento', description: 'Dividendos de Ações' },
-    { id: 3, value: 150.00, isExpense: false, date: '15/10/2025', category: 'Outros', description: 'Venda de item usado' },
-    { id: 4, value: 1000.00, isExpense: false, date: '05/10/2025', category: 'Retornos', description: 'Reembolso de despesa' },
-    { id: 5, value: 4500.00, isExpense: false, date: '25/09/2025', category: 'Salário', description: 'Pagamento mensal (Setembro)' },
-];
-
-// Mapeamento de Ícones e Cores por Categoria
+// Mapeamento de ícones e cores
 const CategoryIcons = {
     'Salário': { icon: DollarSign, color: '#3498db' },
     'Investimento': { icon: TrendingUp, color: '#2ecc71' },
@@ -37,9 +34,18 @@ const CategoryIcons = {
     'Outros': { icon: MoreHorizontal, color: '#95a5a6' },
 };
 
-// -----------------------------------------------------------------
+// utilitário para parsear datas de forma robusta
+const parseDate = (dateStr) => {
+    if (!dateStr) return new Date(NaN);
+    // aceita 'YYYY-MM-DD' ou 'YYYY/MM/DD' ou 'DD/MM/YYYY' etc.
+    // prioriza transformar 'YYYY-MM-DD' -> 'YYYY/MM/DD' para compatibilidade
+    const normalized = dateStr.replace(/-/g, '/');
+    return new Date(normalized);
+};
 
-/** Subcomponente: Gráfico de Barras Horizontais da Distribuição de Receita */
+// -------------------- COMPONENTES --------------------
+
+// Gráfico de barras horizontais
 const HorizontalBarChart = ({ data }) => (
     <div className="horizontal-chart-area">
         {data.map((item, index) => {
@@ -65,9 +71,43 @@ const HorizontalBarChart = ({ data }) => (
     </div>
 );
 
-/** Componente 1: Resumo da Receita (Income Summary) */
-export const IncomeSummary = ({ totalIncome = 60000.00 }) => {
-    const [filter, setFilter] = useState('monthly');
+// IncomeSummary — agora filtra por período real com base nas datas do histórico
+export const IncomeSummary = ({ incomes }) => {
+    const [period, setPeriod] = useState('Último mês');
+    const [filteredIncomes, setFilteredIncomes] = useState([]);
+
+    useEffect(() => {
+        const now = new Date();
+        let startDate;
+
+        if (period === 'Último mês') {
+            // 30 dias atrás (mais previsível que manipular mês por dia)
+            startDate = new Date(now.getTime() - (30 * 24 * 60 * 60 * 1000));
+        } else if (period === 'Semestre') {
+            startDate = new Date(now.getTime() - (180 * 24 * 60 * 60 * 1000)); // ~6 meses
+        } else {
+            startDate = new Date(now.getFullYear(), 0, 1);
+        }
+
+        const filtered = incomes.filter(i => {
+            const d = parseDate(i.date);
+            return !isNaN(d) && d >= startDate;
+        });
+        setFilteredIncomes(filtered);
+    }, [period, incomes]);
+
+    const totalIncome = filteredIncomes.reduce((sum, item) => sum + item.value, 0);
+
+    const summaryData = Object.values(
+        filteredIncomes.reduce((acc, curr) => {
+            if (!acc[curr.category]) acc[curr.category] = { category: curr.category, total: 0 };
+            acc[curr.category].total += curr.value;
+            return acc;
+        }, {})
+    ).map(item => ({
+        ...item,
+        percentage: totalIncome === 0 ? 0 : ((item.total / totalIncome) * 100).toFixed(1),
+    }));
 
     return (
         <div className="income-summary-card">
@@ -75,12 +115,12 @@ export const IncomeSummary = ({ totalIncome = 60000.00 }) => {
                 <h3>Resumo</h3>
                 <select
                     className="filter-dropdown"
-                    value={filter}
-                    onChange={(e) => setFilter(e.target.value)}
+                    value={period}
+                    onChange={e => setPeriod(e.target.value)}
                 >
-                    <option value="monthly">Último Mês</option>
-                    <option value="semiannual">Semestral</option>
-                    <option value="annual">Anual</option>
+                    <option>Último mês</option>
+                    <option>Semestre</option>
+                    <option>Ano</option>
                 </select>
             </header>
 
@@ -89,95 +129,153 @@ export const IncomeSummary = ({ totalIncome = 60000.00 }) => {
                 <strong>{totalIncome.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong>
             </div>
 
-            <HorizontalBarChart data={mockSummaryData} />
+            <HorizontalBarChart data={summaryData} />
         </div>
     );
 };
 
-// Modal para Adição/Edição
-const IncomeModal = ({ isOpen, onClose }) => {
+// Modal de Filtro atualizado com intervalo de datas
+const FilterModal = ({ isOpen, onClose, onFilter }) => {
+    const [minValue, setMinValue] = useState('');
+    const [maxValue, setMaxValue] = useState('');
+    const [dateFrom, setDateFrom] = useState('');
+    const [dateTo, setDateTo] = useState('');
+    const [category, setCategory] = useState('');
+
     if (!isOpen) return null;
-    return (
-        <div className="modal-overlay" onClick={onClose}>
-            <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-                <h3 className='modal-title'>Adicionar Nova Receita</h3>
-                <form className='modal-form'>
-                    <input type="text" placeholder="Descrição (Ex: Salário)" required />
-                    <input type="number" placeholder="Valor (R$)" required />
-                    <input type="date" required />
-                    <select required>
-                        <option value="">Selecione a Categoria</option>
-                        {Object.keys(CategoryIcons).map(cat => (
-                            <option key={cat} value={cat}>{cat}</option>
-                        ))}
-                    </select>
-                    <button type="submit" className="modal-submit-button">Salvar Receita</button>
-                </form>
-                <button className="modal-close-button" onClick={onClose}>Fechar</button>
-            </div>
-        </div>
-    );
-};
 
-// Modal de Filtro
-const FilterModal = ({ isOpen, onClose }) => {
-    if (!isOpen) return null;
-    return (
-        <div className="modal-overlay" onClick={onClose}>
-            <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-                <h3 className='modal-title'>Filtrar Receitas</h3>
-                <form className='modal-form'>
-                    <label>Valor Mínimo</label>
-                    <input type="number" placeholder="R$ 0,00" />
-
-                    <label>Valor Máximo</label>
-                    <input type="number" placeholder="R$ 10.000,00" />
-
-                    <label>Data De:</label>
-                    <input type="date" />
-
-                    <label>Data Até:</label>
-                    <input type="date" />
-
-                    <label>Categoria</label>
-                    <select>
-                        <option value="">Todas as Categorias</option>
-                        {Object.keys(CategoryIcons).map(cat => (
-                            <option key={cat} value={cat}>{cat}</option>
-                        ))}
-                    </select>
-
-                    <button type="submit" className="modal-submit-button">Aplicar Filtro</button>
-                </form>
-                <button className="modal-close-button" onClick={onClose}>Fechar</button>
-            </div>
-        </div>
-    );
-};
-
-/** Componente 2: Histórico de Receitas Recentes (Recent Incomes) */
-export const RecentIncomes = ({ data = mockRecentIncomes }) => {
-    const [selectedItems, setSelectedItems] = useState([]);
-    const [selectAll, setSelectAll] = useState(false);
-    const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-    const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
-
-    const handleSelectAll = (e) => {
-        const isChecked = e.target.checked;
-        setSelectAll(isChecked);
-        if (isChecked) {
-            setSelectedItems(data.map(item => item.id));
-        } else {
-            setSelectedItems([]);
-        }
+    const handleFilter = () => {
+        onFilter({ minValue, maxValue, dateFrom, dateTo, category });
+        onClose();
     };
 
-    const handleSelectItem = (id) => {
-        const newSelectedItems = selectedItems.includes(id)
-            ? selectedItems.filter(itemId => itemId !== id)
-            : [...selectedItems, id];
-        setSelectedItems(newSelectedItems);
-        setSelectAll(newSelectedItems.length === data.length);
+    return (
+        <div className="modal-overlay" onClick={onClose}>
+            <div className="modal-content" onClick={e => e.stopPropagation()}>
+                <h3 className="modal-title">Filtrar Receitas</h3>
+                <div className="modal-form">
+                    <input
+                        type="number"
+                        placeholder="Valor mínimo"
+                        value={minValue}
+                        onChange={e => setMinValue(e.target.value)}
+                    />
+                    <input
+                        type="number"
+                        placeholder="Valor máximo"
+                        value={maxValue}
+                        onChange={e => setMaxValue(e.target.value)}
+                    />
+                    <div className="date-range-fields">
+                        <label>De:</label>
+                        <input
+                            type="date"
+                            value={dateFrom}
+                            onChange={e => setDateFrom(e.target.value)}
+                        />
+                        <label>Até:</label>
+                        <input
+                            type="date"
+                            value={dateTo}
+                            onChange={e => setDateTo(e.target.value)}
+                        />
+                    </div>
+                    <select value={category} onChange={e => setCategory(e.target.value)}>
+                        <option value="">Todas as categorias</option>
+                        {Object.keys(CategoryIcons).map(cat => (
+                            <option key={cat} value={cat}>
+                                {cat}
+                            </option>
+                        ))}
+                    </select>
+                </div>
+                <div className="modal-button-row">
+                    <button
+                        type="button"
+                        className="modal-submit-button"
+                        onClick={handleFilter}
+                    >
+                        Aplicar Filtro
+                    </button>
+                </div>
+                <button className="modal-close-button" onClick={onClose}>
+                    Fechar
+                </button>
+            </div>
+        </div>
+    );
+};
+
+// Histórico
+export const RecentIncomes = ({ incomes, onAddIncome }) => {
+    const [selectedItems, setSelectedItems] = useState([]);
+    const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+    const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
+    const [displayIncomes, setDisplayIncomes] = useState(incomes);
+
+    useEffect(() => setDisplayIncomes(incomes), [incomes]);
+
+    const handleSelectItem = (id) =>
+        setSelectedItems(prev =>
+            prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+        );
+
+    const handleSelectAll = (checked) => {
+        if (checked) setSelectedItems(displayIncomes.map(i => i.id));
+        else setSelectedItems([]);
+    };
+
+    const handleFilter = ({ minValue, maxValue, dateFrom, dateTo, category }) => {
+        let filtered = [...incomes];
+        if (minValue) filtered = filtered.filter(i => i.value >= parseFloat(minValue));
+        if (maxValue) filtered = filtered.filter(i => i.value <= parseFloat(maxValue));
+        if (dateFrom) filtered = filtered.filter(i => parseDate(i.date) >= parseDate(dateFrom));
+        if (dateTo) filtered = filtered.filter(i => parseDate(i.date) <= parseDate(dateTo));
+        if (category) filtered = filtered.filter(i => i.category === category);
+        setDisplayIncomes(filtered);
+        setSelectedItems([]);
+    };
+
+    // --- Export to PDF usando selectedItems e displayIncomes ---
+    const exportSelectedToPDF = () => {
+        if (!selectedItems || selectedItems.length === 0) return;
+    
+        const doc = new jsPDF();
+        doc.setFontSize(16);
+        doc.text("Receitas Selecionadas", 14, 20);
+    
+        // Cabeçalho da tabela
+        const head = [['Descrição', 'Categoria', 'Valor (R$)', 'Data']];
+    
+        // Linhas: seleciona a partir de displayIncomes (filtradas)
+        const body = selectedItems.map(id => {
+            const income = displayIncomes.find(i => i.id === id) || incomes.find(i => i.id === id);
+            if (!income) return ['-', '-', '-', '-'];
+    
+            const dateObj = parseDate(income.date);
+            const dateStr = isNaN(dateObj) ? income.date : dateObj.toLocaleDateString('pt-BR');
+    
+            return [
+                income.description,
+                income.category,
+                income.value.toLocaleString('pt-BR', { minimumFractionDigits: 2 }),
+                dateStr
+            ];
+        });
+    
+        // Gera a tabela no PDF
+        autoTable(doc, {
+            startY: 30,
+            head,
+            body,
+            styles: { fontSize: 11 },
+            headStyles: { fillColor: [240, 240, 240], textColor: [40, 40, 40] },
+            margin: { left: 14, right: 14 }
+        });
+    
+        // Salva o PDF
+        const filename = `receitas_${new Date().toISOString().slice(0,19).replace(/[:T]/g,'-')}.pdf`;
+        doc.save(filename);
     };
 
     const isExportButtonVisible = selectedItems.length > 0;
@@ -188,24 +286,25 @@ export const RecentIncomes = ({ data = mockRecentIncomes }) => {
                 <div className="header-left">
                     <input
                         type="checkbox"
-                        checked={selectAll && data.length > 0}
-                        onChange={handleSelectAll}
-                        className="select-all-checkbox"
-                        disabled={data.length === 0}
+                        checked={
+                            selectedItems.length === displayIncomes.length &&
+                            displayIncomes.length > 0
+                        }
+                        onChange={e => handleSelectAll(e.target.checked)}
                     />
                     <h3>Histórico</h3>
                 </div>
-
-                <div className="filter-controls">
-                    <button className="filter-button" onClick={() => setIsFilterModalOpen(true)}>
-                        <Filter size={16} /> Filtro Detalhado
-                    </button>
-                </div>
+                <button
+                    className="filter-button"
+                    onClick={() => setIsFilterModalOpen(true)}
+                >
+                    <Filter size={16} /> Filtro Detalhado
+                </button>
             </header>
 
             <div className="incomes-list-container">
                 <div className="list-header">
-                    <span className="col-checkbox"></span>
+                    <span></span>
                     <span className="col-value">Valor</span>
                     <span className="col-date">Data</span>
                     <span className="col-category">Categoria</span>
@@ -213,13 +312,17 @@ export const RecentIncomes = ({ data = mockRecentIncomes }) => {
                 </div>
 
                 <div className="list-body">
-                    {data.map(item => {
+                    {displayIncomes.map(item => {
                         const isSelected = selectedItems.includes(item.id);
-                        const { icon: Icon, color } = CategoryIcons[item.category] || { icon: DollarSign, color: '#333' };
-                        const valueClass = item.isExpense ? 'value-expense' : 'value-income';
-
+                        const { icon: Icon, color } = CategoryIcons[item.category] || {
+                            icon: DollarSign,
+                            color: '#333',
+                        };
                         return (
-                            <div key={item.id} className={`list-item ${isSelected ? 'selected' : ''}`}>
+                            <div
+                                key={item.id}
+                                className={`list-item ${isSelected ? 'selected' : ''}`}
+                            >
                                 <div className="col-checkbox">
                                     <input
                                         type="checkbox"
@@ -227,20 +330,31 @@ export const RecentIncomes = ({ data = mockRecentIncomes }) => {
                                         onChange={() => handleSelectItem(item.id)}
                                     />
                                 </div>
-
-                                <div className={`col-value ${valueClass}`}>
-                                    {item.isExpense ? '- ' : '+ '}
-                                    R$ {item.value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                                <div className="col-value value-income">
+                                    + R${' '}
+                                    {item.value.toLocaleString('pt-BR', {
+                                        minimumFractionDigits: 2,
+                                    })}
                                 </div>
-
-                                <div className="col-date">{item.date}</div>
-
+                                <div className="col-date">
+                                    {(() => {
+                                        const d = parseDate(item.date);
+                                        return isNaN(d) ? item.date : d.toLocaleDateString('pt-BR');
+                                    })()}
+                                </div>
                                 <div className="col-category">
-                                    <Icon size={18} color={color} className="category-icon" />
-                                    <span className="category-name">{item.category}</span>
+                                    <Icon
+                                        size={18}
+                                        color={color}
+                                        className="category-icon"
+                                    />
+                                    <span className="category-name">
+                                        {item.category}
+                                    </span>
                                 </div>
-
-                                <div className="col-description">{item.description}</div>
+                                <div className="col-description">
+                                    {item.description}
+                                </div>
                             </div>
                         );
                     })}
@@ -249,24 +363,132 @@ export const RecentIncomes = ({ data = mockRecentIncomes }) => {
 
             {isExportButtonVisible && (
                 <div className="export-action-bar">
-                    <button className="export-button">
+                    <button className="export-button" onClick={exportSelectedToPDF}>
                         <Download size={18} /> Exportar para PDF ({selectedItems.length})
                     </button>
                 </div>
             )}
 
-            {/* Botão Flutuante de Adicionar Receita */}
             <button
                 className="add-income-fab"
-                title="Adicionar Receita"
                 onClick={() => setIsAddModalOpen(true)}
             >
                 <Plus size={24} color="white" />
             </button>
 
-            {/* Modais */}
-            <IncomeModal isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} />
-            <FilterModal isOpen={isFilterModalOpen} onClose={() => setIsFilterModalOpen(false)} />
+            <IncomeModal
+                isOpen={isAddModalOpen}
+                onClose={() => setIsAddModalOpen(false)}
+                onAddIncome={onAddIncome}
+            />
+            <FilterModal
+                isOpen={isFilterModalOpen}
+                onClose={() => setIsFilterModalOpen(false)}
+                onFilter={handleFilter}
+            />
+        </div>
+    );
+};
+
+// Modal de adicionar receita
+const IncomeModal = ({ isOpen, onClose, onAddIncome }) => {
+    const [formData, setFormData] = useState({
+        description: '',
+        value: '',
+        date: '',
+        category: '',
+    });
+
+    if (!isOpen) return null;
+
+    const handleSubmit = (e) => {
+        e.preventDefault();
+        if (!formData.description || !formData.value || !formData.date || !formData.category) return;
+
+        onAddIncome({
+            id: Date.now(),
+            description: formData.description,
+            value: parseFloat(formData.value),
+            date: formData.date,
+            category: formData.category,
+            isExpense: false,
+        });
+
+        setFormData({ description: '', value: '', date: '', category: '' });
+        onClose();
+    };
+
+    return (
+        <div className="modal-overlay" onClick={onClose}>
+            <div className="modal-content" onClick={e => e.stopPropagation()}>
+                <h3 className="modal-title">Adicionar Nova Receita</h3>
+                <form className="modal-form" onSubmit={handleSubmit}>
+                    <input
+                        type="text"
+                        placeholder="Descrição"
+                        value={formData.description}
+                        onChange={e =>
+                            setFormData({ ...formData, description: e.target.value })
+                        }
+                        required
+                    />
+                    <input
+                        type="number"
+                        placeholder="Valor (R$)"
+                        value={formData.value}
+                        onChange={e =>
+                            setFormData({ ...formData, value: e.target.value })
+                        }
+                        required
+                    />
+                    <input
+                        type="date"
+                        value={formData.date}
+                        onChange={e =>
+                            setFormData({ ...formData, date: e.target.value })
+                        }
+                        required
+                    />
+                    <select
+                        value={formData.category}
+                        onChange={e =>
+                            setFormData({ ...formData, category: e.target.value })
+                        }
+                        required
+                    >
+                        <option value="">Selecione a Categoria</option>
+                        {Object.keys(CategoryIcons).map(cat => (
+                            <option key={cat} value={cat}>
+                                {cat}
+                            </option>
+                        ))}
+                    </select>
+                    <div className="modal-button-row">
+                        <button type="submit" className="modal-submit-button">
+                            Salvar Receita
+                        </button>
+                    </div>
+                </form>
+                <button className="modal-close-button" onClick={onClose}>
+                    Fechar
+                </button>
+            </div>
+        </div>
+    );
+};
+
+// Componente pai
+export const IncomeContainer = () => {
+    const [incomes, setIncomes] = useState(initialIncomes);
+
+    const handleAddIncome = (newIncome) => {
+        setIncomes(prev => [newIncome, ...prev]);
+    };
+
+    return (
+        <div className="incomes-layout">
+            <IncomeSummary incomes={incomes} />
+            <RecentIncomes incomes={incomes} onAddIncome={handleAddIncome} />
         </div>
     );
 };

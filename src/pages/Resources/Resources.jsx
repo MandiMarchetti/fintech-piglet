@@ -5,7 +5,7 @@ import { LayoutDashboard } from 'lucide-react';
 import { BalanceSummary, IncomeExpenseChart, RecentActivityPlaceholder }
     from '../../components/HomeComponents/HomeComponents.jsx';
 
-import { IncomeSummary, RecentIncomes }
+import { IncomeContainer }
     from '../../components/IncomeComponents/IncomeComponents.jsx';
 
 import PigletLogo from '../../assets/Logo_piglet.svg';
@@ -129,8 +129,7 @@ const Resources = () => {
             case 'incomes':
                 return (
                     <div className="incomes-layout">
-                        <IncomeSummary />
-                        <RecentIncomes />
+                        <IncomeContainer />
                     </div>
                 );
             case 'expenses':
