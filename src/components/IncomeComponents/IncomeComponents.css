@@ -1,0 +1,586 @@
+/* ------------------------------------------------------------------- */
+/* LAYOUT PRINCIPAL DA TELA DE RECEITAS */
+/* ------------------------------------------------------------------- */
+.incomes-layout {
+    display: grid;
+    gap: 30px;
+    grid-template-columns: minmax(400px, 1fr) 2fr; /* coluna mínima de 300px */
+    align-items: start;
+    min-height: calc(100% - 60px - 30px);
+    padding: 20px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+/* ------------------------------------------------------------------- */
+/* Componente 1: Resumo da Receita (Income Summary) */
+/* ------------------------------------------------------------------- */
+.income-summary-card {
+    background-color: white;
+    padding: 25px; 
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    height: fit-content; 
+}
+
+.summary-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    border-bottom: 1px solid #f0f0f0;
+    padding-bottom: 10px;
+}
+
+.summary-header h3 {
+    margin: 0;
+    font-size: 1.2em;
+    color: #333;
+}
+
+.filter-dropdown {
+    padding: 6px 10px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    background-color: #fafafa;
+    cursor: pointer;
+    font-size: 13px;
+    appearance: none; 
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="%23555" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>');
+    background-repeat: no-repeat;
+    background-position: right 8px center;
+    padding-right: 30px;
+}
+
+.total-income-value {
+    text-align: center;
+    margin-bottom: 25px;
+}
+.total-income-value p {
+    color: #777;
+    margin: 0 0 5px 0;
+    font-size: 0.9em;
+}
+.total-income-value strong {
+    font-size: 2.5em;
+    font-weight: 700;
+    color: #2ecc71; 
+}
+
+/* Estilos do Gráfico de Barras Horizontais */
+.horizontal-chart-area {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    padding-top: 15px;
+    border-top: 1px solid #f0f0f0;
+}
+
+.horizontal-bar-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.9em;
+}
+
+.category-label {
+    width: 80px; 
+    color: #555;
+    white-space: nowrap;
+}
+
+.bar-wrapper {
+    flex-grow: 1;
+    height: 10px;
+    background-color: #eee;
+    border-radius: 5px;
+    overflow: hidden;
+}
+
+.horizontal-bar {
+    height: 100%;
+    background-color: #2ecc71; 
+    transition: width 0.5s ease-out;
+    border-radius: 5px;
+}
+
+.percentage-label {
+    width: 30px; 
+    font-weight: 600;
+    color: #2ecc71;
+    text-align: right;
+}
+
+
+/* ------------------------------------------------------------------- */
+/* Componente 2: Histórico de Receitas (Recent Incomes) */
+/* ------------------------------------------------------------------- */
+.recent-incomes-card {
+    background-color: white;
+    padding: 25px; 
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    position: relative; 
+    display: flex;
+    flex-direction: column;
+    min-height: 400px;
+}
+
+.incomes-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    /* Ajuste para que o filtro não quebre o layout no mobile */
+    flex-wrap: wrap; 
+    gap: 10px;
+}
+
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.select-all-checkbox {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+}
+
+.incomes-header h3 {
+    margin: 0;
+    font-size: 1.2em;
+    color: #333;
+}
+
+.filter-controls {
+    display: flex;
+    gap: 10px;
+    /* Adicionado overflow e flex-shrink para evitar overflow do cabeçalho */
+    overflow-x: auto;
+    padding-bottom: 5px; 
+    flex-shrink: 0;
+}
+
+.filter-button {
+    padding: 8px 12px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    background-color: white;
+    cursor: pointer;
+    font-size: 0.9em;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    color: #555;
+    transition: background-color 0.2s;
+    flex-shrink: 0; /* Impede que os botões encolham muito */
+}
+
+.filter-button:hover {
+    background-color: #f5f5f5;
+}
+
+
+/* Tabela/Lista de Receitas */
+.incomes-list-container {
+    flex-grow: 1;
+    overflow-x: auto; /* Permite rolagem horizontal APENAS para a tabela */
+    width: 100%; 
+    box-sizing: border-box;
+    -webkit-overflow-scrolling: touch; 
+}
+
+/* IMPORTANTE: Estes estilos aplicam padding para espaçamento interno */
+.list-header, .list-item {
+    display: grid;
+    /* Colunas: 30px (checkbox) | 1fr (valor) | 1fr (data) | 1.5fr (categoria) | 2fr (descrição) */
+    grid-template-columns: 30px 1fr 1fr 1.5fr 2fr;
+    gap: 15px;
+    padding: 12px 25px; /* Adiciona padding interno de volta, igual ao padding do card */
+    align-items: center;
+    font-size: 0.9em;
+    /* Define uma largura mínima (sem padding) para forçar o scroll horizontal no desktop */
+    min-width: 650px; 
+}
+
+.list-header {
+    font-weight: 600;
+    color: #555;
+    border-bottom: 2px solid #f0f0f0;
+    padding-bottom: 10px;
+    margin-bottom: 5px;
+}
+
+.list-body {
+    overflow-y: auto; 
+    flex-grow: 1;
+}
+
+.list-item {
+    border-bottom: 1px solid #eee;
+    transition: background-color 0.2s;
+}
+
+.list-item:last-child {
+    border-bottom: none;
+}
+
+.list-item:hover {
+    background-color: #fafafa;
+}
+
+.list-item.selected {
+    background-color: #e6f7ff;
+}
+
+.col-checkbox {
+    display: flex;
+    justify-content: center;
+}
+
+.col-value {
+    font-weight: 700;
+}
+.value-income {
+    color: #2ecc71; 
+}
+.value-expense {
+    color: #e74c3c; 
+}
+
+.col-category {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.category-icon {
+    min-width: 18px;
+}
+.category-name {
+    color: #555;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.col-description {
+    color: #777;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+
+/* Botão Exportar (Condicional) */
+.export-action-bar {
+    display: flex;
+    justify-content: flex-start;
+    padding-top: 15px;
+    border-top: 1px solid #f0f0f0;
+    margin-top: 15px;
+    padding-left: 25px; /* Adiciona padding lateral para desktop */
+}
+.export-button {
+    padding: 10px 15px;
+    background-color: #FF594E;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.9em;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: background-color 0.2s;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+.export-button:hover {
+    background-color: #e74c3c;
+}
+
+/* Botão Flutuante (FAB) */
+.add-income-fab {
+    position: fixed; 
+    bottom: 30px;
+    right: 40px; 
+    width: 55px;
+    height: 55px;
+    border-radius: 50%;
+    background-color: #FF594E;
+    color: white;
+    border: none;
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.2s, background-color 0.2s;
+    z-index: 50;
+}
+.add-income-fab:hover {
+    transform: scale(1.05);
+    background-color: #e74c3c;
+}
+
+/* --- Centraliza o botão Salvar --- */
+.modal-button-row {
+    display: flex;
+    justify-content: center;
+    margin-top: 10px;
+}
+
+/* --- Campos de intervalo de data no modal de filtro --- */
+.date-range-fields {
+    display: grid;
+    grid-template-columns: auto 1fr auto 1fr;
+    align-items: center;
+    gap: 8px;
+}
+.date-range-fields label {
+    font-size: 0.9em;
+    color: #555;
+}
+
+/* Corrige alinhamento geral de modais */
+.modal-submit-button {
+    width: fit-content;
+    min-width: 160px;
+}
+
+/* Estilo para checkbox "Selecionar Tudo" */
+.header-left input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+}
+
+/* Alinha checkbox e título "Histórico" */
+.header-left h3 {
+    margin: 0;
+    font-size: 1.2em;
+    color: #333;
+}
+
+/* Inputs do Modal de Filtro */
+.modal-form input[type="number"],
+.modal-form input[type="date"],
+.modal-form select {
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 1em;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+/* Botão Aplicar Filtro */
+.modal-submit-button {
+    padding: 12px;
+    background-color: #2ecc71;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 10px;
+    transition: background-color 0.2s;
+}
+
+.modal-submit-button:hover {
+    background-color: #27ae60;
+}
+
+/* ------------------------------------------------------------------- */
+/* MODAIS (Manter como estava, pois estão responsivos) */
+/* ------------------------------------------------------------------- */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    padding: 20px;
+}
+
+.modal-content {
+    background: white;
+    padding: 30px;
+    border-radius: 12px;
+    width: 100%;
+    max-width: 450px;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+    position: relative;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.modal-title {
+    font-size: 1.5em;
+    color: #333;
+    margin-bottom: 20px;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 10px;
+}
+
+.modal-form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.modal-form label {
+    font-weight: 500;
+    color: #555;
+    margin-top: 5px;
+}
+
+.modal-form input[type="text"],
+.modal-form input[type="number"],
+.modal-form input[type="date"],
+.modal-form select {
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 1em;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.modal-submit-button {
+    padding: 12px;
+    background-color: #2ecc71;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 10px;
+    transition: background-color 0.2s;
+}
+.modal-submit-button:hover {
+    background-color: #27ae60;
+}
+
+.modal-close-button {
+    background: none;
+    border: none;
+    color: #555;
+    padding: 10px;
+    margin-top: 15px;
+    cursor: pointer;
+    text-align: center;
+    width: 100%;
+}
+
+
+/* ------------------------------------------------------------------- */
+/* RESPONSIVIDADE */
+/* ------------------------------------------------------------------- */
+
+/* === Tablets e celulares (400px - 1200px) === */
+@media (max-width: 1200px) {
+    .incomes-layout {
+        grid-template-columns: 1fr;
+        gap: 18px;
+        padding: 18px;
+    }
+
+    .income-summary-card,
+    .recent-incomes-card {
+        width: 100%;
+        padding: 20px 16px;
+    }
+
+    .summary-header h3,
+    .incomes-header h3 {
+        font-size: 1em;
+    }
+
+    .filter-button {
+        font-size: 0.8em;
+        padding: 6px 10px;
+    }
+
+    /* Adiciona scroll horizontal à tabela de histórico */
+    .recent-incomes-card {
+        overflow-x: auto;
+    }
+
+    .list-header,
+    .list-body {
+        min-width: 600px; /* Largura mínima para forçar o scroll */
+    }
+
+    .list-item {
+        min-width: 600px;
+    }
+
+    /* Botões e FAB */
+    .export-action-bar {
+        justify-content: center;
+        padding: 10px 0 70px 0;
+    }
+
+    .add-income-fab {
+        right: 20px;
+        bottom: 70px;
+        width: 50px;
+        height: 50px;
+    }
+}
+
+
+/* ------------------------------------------------------------------- */
+/* CORREÇÃO: Evita scroll horizontal no modal de filtro (mobile) */
+/* ------------------------------------------------------------------- */
+@media (max-width: 600px) {
+    .date-range-fields {
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+        width: 100%;
+    }
+
+    .date-range-fields label {
+        margin-bottom: 4px;
+    }
+
+    .modal-form input[type="date"] {
+        width: 100%;
+    }
+}
+
+
+/* === Telas muito pequenas (até 400px) === */
+@media (max-width: 400px) {
+    .incomes-layout {
+        padding: 0px;
+    }
+    .income-summary-card,
+    .recent-incomes-card {
+        padding: 15px 12px;
+    }
+
+    .filter-button {
+        font-size: 0.75em;
+        padding: 5px 8px;
+    }
+
+    .modal-content {
+        padding: 20px;
+    }
+
+    .total-income-value strong {
+        font-size: 1.8em;
+    }
+}
+
