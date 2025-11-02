@@ -17,7 +17,7 @@ import './IncomeComponents.css';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
-// --- DADOS INICIAIS ---
+// --- DADOS INICIAIS (mantidos como fallback enquanto não há dados da API) ---
 const initialIncomes = [
     { id: 1, value: 3000.00, isExpense: false, date: '2025/10/25', category: 'Salário', description: 'Pagamento mensal (Outubro)' },
     { id: 2, value: 500.50, isExpense: false, date: '2025/10/20', category: 'Investimento', description: 'Dividendos de Ações' },
@@ -34,18 +34,30 @@ const CategoryIcons = {
     'Outros': { icon: MoreHorizontal, color: '#95a5a6' },
 };
 
+// Mapeamento categoria <-> id (conforme seu backend)
+const CATEGORY_NAME_TO_ID = {
+    'Salário': 1,
+    'Investimento': 3,
+    'Retornos': 4,
+    'Outros': 5,
+};
+const CATEGORY_ID_TO_NAME = {
+    1: 'Salário',
+    3: 'Investimento',
+    4: 'Retornos',
+    5: 'Outros',
+};
+
 // utilitário para parsear datas de forma robusta
 const parseDate = (dateStr) => {
     if (!dateStr) return new Date(NaN);
-    // aceita 'YYYY-MM-DD' ou 'YYYY/MM/DD' ou 'DD/MM/YYYY' etc.
-    // prioriza transformar 'YYYY-MM-DD' -> 'YYYY/MM/DD' para compatibilidade
     const normalized = dateStr.replace(/-/g, '/');
     return new Date(normalized);
 };
 
 // -------------------- COMPONENTES --------------------
 
-// Gráfico de barras horizontais
+// Gráfico de barras horizontais (mantido igual)
 const HorizontalBarChart = ({ data }) => (
     <div className="horizontal-chart-area">
         {data.map((item, index) => {
@@ -71,7 +83,7 @@ const HorizontalBarChart = ({ data }) => (
     </div>
 );
 
-// IncomeSummary — agora filtra por período real com base nas datas do histórico
+// IncomeSummary — filtra por período com base nas datas (mantido)
 export const IncomeSummary = ({ incomes }) => {
     const [period, setPeriod] = useState('Último mês');
     const [filteredIncomes, setFilteredIncomes] = useState([]);
@@ -81,10 +93,9 @@ export const IncomeSummary = ({ incomes }) => {
         let startDate;
 
         if (period === 'Último mês') {
-            // 30 dias atrás (mais previsível que manipular mês por dia)
             startDate = new Date(now.getTime() - (30 * 24 * 60 * 60 * 1000));
         } else if (period === 'Semestre') {
-            startDate = new Date(now.getTime() - (180 * 24 * 60 * 60 * 1000)); // ~6 meses
+            startDate = new Date(now.getTime() - (180 * 24 * 60 * 60 * 1000));
         } else {
             startDate = new Date(now.getFullYear(), 0, 1);
         }
@@ -134,7 +145,7 @@ export const IncomeSummary = ({ incomes }) => {
     );
 };
 
-// Modal de Filtro atualizado com intervalo de datas
+// Modal de Filtro atualizado com intervalo de datas (mantido)
 const FilterModal = ({ isOpen, onClose, onFilter }) => {
     const [minValue, setMinValue] = useState('');
     const [maxValue, setMaxValue] = useState('');
@@ -206,7 +217,7 @@ const FilterModal = ({ isOpen, onClose, onFilter }) => {
     );
 };
 
-// Histórico
+// Histórico (mantido, só usa os props que recebe)
 export const RecentIncomes = ({ incomes, onAddIncome }) => {
     const [selectedItems, setSelectedItems] = useState([]);
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -239,22 +250,22 @@ export const RecentIncomes = ({ incomes, onAddIncome }) => {
     // --- Export to PDF usando selectedItems e displayIncomes ---
     const exportSelectedToPDF = () => {
         if (!selectedItems || selectedItems.length === 0) return;
-    
+
         const doc = new jsPDF();
         doc.setFontSize(16);
         doc.text("Receitas Selecionadas", 14, 20);
-    
+
         // Cabeçalho da tabela
         const head = [['Descrição', 'Categoria', 'Valor (R$)', 'Data']];
-    
+
         // Linhas: seleciona a partir de displayIncomes (filtradas)
         const body = selectedItems.map(id => {
             const income = displayIncomes.find(i => i.id === id) || incomes.find(i => i.id === id);
             if (!income) return ['-', '-', '-', '-'];
-    
+
             const dateObj = parseDate(income.date);
             const dateStr = isNaN(dateObj) ? income.date : dateObj.toLocaleDateString('pt-BR');
-    
+
             return [
                 income.description,
                 income.category,
@@ -262,7 +273,7 @@ export const RecentIncomes = ({ incomes, onAddIncome }) => {
                 dateStr
             ];
         });
-    
+
         // Gera a tabela no PDF
         autoTable(doc, {
             startY: 30,
@@ -272,7 +283,7 @@ export const RecentIncomes = ({ incomes, onAddIncome }) => {
             headStyles: { fillColor: [240, 240, 240], textColor: [40, 40, 40] },
             margin: { left: 14, right: 14 }
         });
-    
+
         // Salva o PDF
         const filename = `receitas_${new Date().toISOString().slice(0,19).replace(/[:T]/g,'-')}.pdf`;
         doc.save(filename);
@@ -379,7 +390,11 @@ export const RecentIncomes = ({ incomes, onAddIncome }) => {
             <IncomeModal
                 isOpen={isAddModalOpen}
                 onClose={() => setIsAddModalOpen(false)}
-                onAddIncome={onAddIncome}
+                onAddIncome={(income) => {
+                    // chama callback enviado pelo pai
+                    onAddIncome(income);
+                    setIsAddModalOpen(false);
+                }}
             />
             <FilterModal
                 isOpen={isFilterModalOpen}
@@ -390,7 +405,7 @@ export const RecentIncomes = ({ incomes, onAddIncome }) => {
     );
 };
 
-// Modal de adicionar receita
+// Modal de adicionar receita (mantido estrutura; apenas chama onAddIncome)
 const IncomeModal = ({ isOpen, onClose, onAddIncome }) => {
     const [formData, setFormData] = useState({
         description: '',
@@ -405,6 +420,7 @@ const IncomeModal = ({ isOpen, onClose, onAddIncome }) => {
         e.preventDefault();
         if (!formData.description || !formData.value || !formData.date || !formData.category) return;
 
+        // Envia o objeto para o pai (pai decidirá se manda para API)
         onAddIncome({
             id: Date.now(),
             description: formData.description,
@@ -477,12 +493,93 @@ const IncomeModal = ({ isOpen, onClose, onAddIncome }) => {
     );
 };
 
-// Componente pai
+// Componente pai (modificado para buscar/criar via API sem alterar a API interna)
 export const IncomeContainer = () => {
     const [incomes, setIncomes] = useState(initialIncomes);
 
-    const handleAddIncome = (newIncome) => {
-        setIncomes(prev => [newIncome, ...prev]);
+    // Pega id do usuário logado (de onde você já salvou no login)
+    const userId = localStorage.getItem('userId');
+
+    // Função para mapear receita do backend para o formato usado aqui
+    const mapApiIncomeToLocal = (item) => ({
+        id: item.id,
+        value: parseFloat(item.value),
+        isExpense: false,
+        date: item.incomeDate || item.date || '',
+        category: CATEGORY_ID_TO_NAME[item.categoryId] || 'Outros',
+        description: item.description || '',
+    });
+
+    // Busca as receitas do backend pelo userId e atualiza o estado
+    const fetchIncomesFromApi = async () => {
+        if (!userId) {
+            console.warn('IncomeContainer: userId não encontrado no localStorage.');
+            return;
+        }
+
+        try {
+            const res = await fetch(`http://localhost:8080/piglet/api/users/${userId}/incomes`);
+            if (!res.ok) {
+                console.error('Erro ao buscar incomes da API:', res.status);
+                return;
+            }
+            const data = await res.json();
+            if (!Array.isArray(data)) {
+                console.warn('Resposta de incomes não é array:', data);
+                return;
+            }
+            const mapped = data.map(mapApiIncomeToLocal);
+            setIncomes(mapped);
+        } catch (err) {
+            console.error('Erro ao buscar incomes:', err);
+        }
+    };
+
+    useEffect(() => {
+        // Ao montar, tenta buscar do backend. Se falhar, mantém os dados mockados.
+        fetchIncomesFromApi();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
+    // Ao adicionar nova receita (recebida do IncomeModal via RecentIncomes -> onAddIncome)
+    const handleAddIncome = async (newIncome) => {
+        // newIncome tem: { id, description, value, date, category, isExpense }
+        // Precisamos mandar ao backend com userId e categoryId
+        const categoryId = CATEGORY_NAME_TO_ID[newIncome.category] || 5;
+        const payload = {
+            userId: Number(userId) || 0,
+            categoryId,
+            description: newIncome.description,
+            value: Number(newIncome.value),
+            incomeDate: newIncome.date,
+        };
+
+        // Tenta enviar ao backend; se der certo, atualiza estado com objeto retornado.
+        try {
+            const res = await fetch('http://localhost:8080/piglet/api/users/all/incomes', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload),
+            });
+
+            if (!res.ok) {
+                // fallback: apenas insere localmente para não quebrar fluxo
+                console.warn('POST createIncome retornou status', res.status, '- adicionando localmente como fallback.');
+                const localIncome = { ...newIncome, id: Date.now() };
+                setIncomes(prev => [localIncome, ...prev]);
+                return;
+            }
+
+            const created = await res.json();
+            // Normaliza o objeto retornado do backend (pode variar conforme API)
+            const mapped = mapApiIncomeToLocal(created);
+            setIncomes(prev => [mapped, ...prev]);
+        } catch (err) {
+            console.error('Erro ao criar receita na API:', err);
+            // fallback local para continuar fluxo
+            const localIncome = { ...newIncome, id: Date.now() };
+            setIncomes(prev => [localIncome, ...prev]);
+        }
     };
 
     return (
