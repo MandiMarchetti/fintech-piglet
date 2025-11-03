@@ -320,9 +320,24 @@
     transition: transform 0.2s, background-color 0.2s;
     z-index: 50;
 }
+
 .add-income-fab:hover {
+    background-color: #27ae60;
     transform: scale(1.05);
-    background-color: #e74c3c;
+}
+
+/* Animação de bouncing suave */
+@keyframes gentle-bounce {
+    0%, 100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-6px);
+    }
+}
+
+.add-income-fab.bouncing {
+    animation: gentle-bounce 1.5s ease-in-out infinite;
 }
 
 /* --- Centraliza o botão Salvar --- */
