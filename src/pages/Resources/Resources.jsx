@@ -8,6 +8,14 @@ import { BalanceSummary, IncomeExpenseChart, RecentActivityPlaceholder }
 import { IncomeContainer }
     from '../../components/IncomeComponents/IncomeComponents.jsx';
 
+import { ExpenseContainer }
+    from '../../components/ExpenseComponents/ExpenseComponents.jsx';
+
+import { InvestmentContainer }
+    from '../../components/InvestmentComponents/InvestmentComponents.jsx';
+
+
+
 import PigletLogo from '../../assets/Logo_piglet.svg';
 import Home from '../../assets/Home Tab.svg';
 import revenue from '../../assets/banknote-arrow-up.svg';
@@ -134,18 +142,14 @@ const Resources = () => {
                 );
             case 'expenses':
                 return (
-                    <div className="main-content-placeholder">
-                        <LayoutDashboard size={48} color="#e74c3c" />
-                        <h2>Registro de Despesas</h2>
-                        <p>O conteúdo da seção de Despesas será renderizado aqui.</p>
+                    <div className="incomes-layout">
+                        <ExpenseContainer />
                     </div>
                 );
             case 'investments':
                 return (
-                    <div className="main-content-placeholder">
-                        <LayoutDashboard size={48} color="#3498db" />
-                        <h2>Meus Investimentos</h2>
-                        <p>O conteúdo da seção de Investimentos será renderizado aqui.</p>
+                    <div className="incomes-layout">
+                        <InvestmentContainer />
                     </div>
                 );
             case 'profile':
