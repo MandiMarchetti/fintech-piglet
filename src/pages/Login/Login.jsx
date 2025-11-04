@@ -41,10 +41,12 @@ const LoginPage = () => {
             const data = await response.json();
 
             if (data && data.id) {
-                // Salva informações do usuário no localStorage
                 localStorage.setItem("userId", data.id);
                 localStorage.setItem("userName", data.name);
                 localStorage.setItem("userEmail", data.email);
+
+                // ✅ Salvar senha usada no login
+                localStorage.setItem("userPassword", password);
 
                 alert(`Bem-vindo(a), ${data.name}!`);
                 navigate("/Resources");
@@ -58,7 +60,6 @@ const LoginPage = () => {
     };
 
     const handleRegisterClick = () => navigate("/register");
-    const handleForgotPassword = () => alert("Recuperação de senha em desenvolvimento.");
 
     return (
         <div className="login-container">
@@ -85,10 +86,6 @@ const LoginPage = () => {
                         onChange={(e) => setPassword(e.target.value)}
                         required
                     />
-
-                    <a onClick={handleForgotPassword} className="forgot-password-link">
-                        Esqueceu sua senha?
-                    </a>
 
                     <button type="submit" className="login-button">
                         Entrar

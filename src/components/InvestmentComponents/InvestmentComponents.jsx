@@ -45,13 +45,13 @@ const HorizontalBarChart = ({ data }) => (
 
 // InvestmentSummary (estrutura idêntica ao ExpenseSummary, adaptada)
 export const InvestmentSummary = ({ investments }) => {
-    const [period, setPeriod] = useState("Último mês");
+    const [period, setPeriod] = useState("Últimos 30 dias");
     const [filteredInvestments, setFilteredInvestments] = useState([]);
 
     useEffect(() => {
         const now = new Date();
         let startDate;
-        if (period === "Último mês") startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+        if (period === "Últimos 30 dias") startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
         else if (period === "Semestre") startDate = new Date(now.getTime() - 180 * 24 * 60 * 60 * 1000);
         else startDate = new Date(now.getFullYear(), 0, 1);
 
@@ -77,7 +77,7 @@ export const InvestmentSummary = ({ investments }) => {
             <header className="summary-header">
                 <h3>Investimento</h3>
                 <select className="filter-dropdown" value={period} onChange={(e) => setPeriod(e.target.value)}>
-                    <option>Último mês</option>
+                    <option>Últimos 30 dias</option>
                     <option>Semestre</option>
                     <option>Ano</option>
                 </select>
