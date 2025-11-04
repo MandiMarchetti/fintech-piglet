@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import './Resources.css';
 import { LayoutDashboard } from 'lucide-react';
 
@@ -14,7 +15,8 @@ import { ExpenseContainer }
 import { InvestmentContainer }
     from '../../components/InvestmentComponents/InvestmentComponents.jsx';
 
-
+import ProfileComponents
+    from '../../components/ProfileComponents/ProfileComponents.jsx';
 
 import PigletLogo from '../../assets/Logo_piglet.svg';
 import Home from '../../assets/Home Tab.svg';
@@ -114,6 +116,15 @@ const Resources = () => {
     const [activeSection, setActiveSection] = useState('home');
     const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
+    const navigate = useNavigate();
+
+    useEffect(() => {
+        const userId = localStorage.getItem('userId'); // verifica se o usuário está logado
+        if (!userId) {
+            navigate('/login'); // redireciona para a tela de login se não estiver logado
+        }
+    }, [navigate]);
+
     // Hook para escutar o redimensionamento da tela
     useEffect(() => {
         const handleResize = () => {
@@ -154,11 +165,12 @@ const Resources = () => {
                 );
             case 'profile':
                 return (
-                    <div className="main-content-placeholder">
-                        <LayoutDashboard size={48} color="#555" />
-                        <h2>Configurações de Perfil</h2>
+                    <div>
+                        <ProfileComponents />
                     </div>
                 );
+
+
             default:
                 return (
                     <div className="main-content-placeholder">
