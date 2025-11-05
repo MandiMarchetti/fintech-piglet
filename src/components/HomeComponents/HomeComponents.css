@@ -188,31 +188,34 @@
 .chart-bars {
     flex-grow: 1;
     display: flex;
-    align-items: flex-end; /* CRÍTICO: Barras crescem de baixo para cima */
-    gap: 5%; /* Espaço entre os grupos de meses */
-    position: relative; 
-    padding-left: 10px; 
+    align-items: flex-end; /* As barras encostam no chão */
+    gap: 5%;
+    position: relative;
+    padding-left: 10px;
     padding-right: 10px;
 }
 
+
 .bar-group {
-    flex: 1; 
+    flex: 1;
     display: flex;
-    justify-content: center; 
-    gap: 5px; 
-    height: 100%; /* Ocupa a altura total do chart-bars */
-    position: relative; 
+    justify-content: center;
+    gap: 5px;
+    height: 100%;
+    position: relative;
+    align-items: flex-end; /* Certifica que barra começa no rodapé do grupo */
 }
 
+
 .bar {
-    width: 40%; 
-    max-width: 20px; 
-    min-width: 8px; 
-    background-color: #ccc; 
+    width: 40%;
+    max-width: 22px;
+    min-width: 8px;
     border-radius: 4px 4px 0 0;
-    transition: height 0.3s ease-out; 
-    height: 0; /* Começa com 0 altura, a altura real vem do inline style */
+    transition: height 0.45s ease-out;
+    height: 0px; /* começa vazia */
 }
+
 
 .income-bar { background-color: #2ecc71; }
 .expense-bar { background-color: #e74c3c; }
@@ -246,6 +249,7 @@
         order: 2; 
         min-height: 250px; 
         height: 280px;
+        overflow-x: auto;
     } 
     .activity-card { 
         order: 3; 
@@ -259,6 +263,12 @@
         padding-left: 40px; /* Reduz espaço para eixo Y */
         padding-bottom: 25px; /* Reduz espaço para labels X */
     }
+
+    /* Garante que o conteúdo interno não quebre */
+  .chart-bars {
+    flex-shrink: 0;
+  }
+  
     .y-axis {
         width: 35px;
         font-size: 0.65em;
@@ -270,11 +280,6 @@
         width: calc(100% - 40px); /* Ajustado para o novo padding-left */
     }
     
-    .chart-bars {
-        gap: 5%; 
-        padding-left: 10px;
-        padding-right: 10px;
-    }
     .bar-group {
         gap: 3px; 
     }
@@ -282,4 +287,72 @@
         font-size: 0.7em;
         bottom: -20px;
     }
+
+}
+
+/* --- ATIVIDADE RECENTE --- */
+.activity-card {
+  display: flex;
+  flex-direction: column;
+}
+
+.no-activity {
+  color: #999;
+  font-size: 0.9em;
+  text-align: center;
+  margin-top: 10px;
+}
+
+.activity-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.activity-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 8px;
+  border-bottom: 1px solid #eee;
+  transition: background 0.2s ease;
+}
+
+.activity-item:hover {
+  background: #fafafa;
+}
+
+.activity-icon {
+  width: 32px;
+  display: flex;
+  justify-content: center;
+}
+
+.activity-content {
+  flex: 1;
+  margin-left: 8px;
+  display: flex;
+  flex-direction: column;
+}
+
+.activity-desc {
+  font-weight: 500;
+  color: #333;
+}
+
+.activity-date {
+  font-size: 0.8em;
+  color: #888;
+}
+
+.activity-value {
+  font-weight: 600;
+}
+
+.activity-value.positive {
+  color: #00b341;
+}
+
+.activity-value.negative {
+  color: #d93025;
 }
